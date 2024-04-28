@@ -20,10 +20,8 @@ Use kafka consumer to show the status of the queues
 ## Getting started
 To start the application, just run "docker-compose up -d" on the root folder of
 the project.
-When every container is running, go into the "kafkaserver" container 
-(I use docker Desktop to manage containers) and run in a shell "java -jar ~/stream.jar"
-to run the stream application.
 You are ready! Put some events into the cars/events.log file following this format:
 {"kart":"name","status":"recoverable/scrap"} (remember to leave a blank line at the end of the file).
 You should see in the consumers containers these events showing up (you can also check using 
-kafa ui)
+kafa ui on localhost:8080)
+To stop the application run "docker-compose down"

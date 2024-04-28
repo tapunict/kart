@@ -20,8 +20,6 @@ services:
   kafkaserver:
     hostname: kafkaserver
     image: "confluentinc/cp-kafka:latest"
-    volumes:
-      - ./streams-quickstart-gradle/app/build/libs/app-0.1.jar:/home/appuser/stream.jar
     depends_on:
       - zookeeper
     ports:
@@ -50,6 +48,15 @@ services:
       kafka-topics --bootstrap-server kafkaserver:9092 --list
       "
 
+  kafka-stream:
+    hostname: kafka-stream
+    image: "confluentinc/cp-kafka:latest"
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+    volumes:
+      - ./streams-quickstart-gradle/app/build/libs/app-0.1.jar:/home/appuser/stream.jar
+    command: "java -jar /home/appuser/stream.jar"
   recoverable-consumer:
     hostname: recoverable-consumer
     image: "confluentinc/cp-kafka:latest"

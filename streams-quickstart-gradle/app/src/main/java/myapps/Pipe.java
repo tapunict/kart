@@ -17,7 +17,7 @@ public class Pipe {
     public static Properties getProperties() {
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "kart-stream");
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "PLAINTEXT://kafkaserver:9092");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         return props;
     }
@@ -26,7 +26,7 @@ public class Pipe {
         KStream<String, KartModel> source = builder.stream("cars",Consumed.with(Serdes.String(), kartSerde));
         if (useextractor) {
             source.to(new DynamicTopicNameExtractor());
-        } else { //simple testing
+        } else { //little more complex testing
             source.mapValues(record -> {
                 System.out.println("Processing record: " + record);
                 record.setStatus("Processed");

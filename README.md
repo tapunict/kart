@@ -17,6 +17,12 @@ Help Mario implementing a system based of files put in a given directory
 send to Kafka and using Kafka Stream perform a triage and sent to the appropriate topic
 Use kafka consumer to show the status of the queues
 
+## Setup
+You have to build the gradle stream application before running the containers.
+To do so, you have to go into "streams-quickstart-gradle" and run "./gradlew fatJar".
+This command will build the application jar that is already mapped in docker compose file
+for the stream container.
+
 ## Getting started
 To start the application, just run "docker-compose up -d" on the root folder of
 the project.

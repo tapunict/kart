@@ -55,7 +55,7 @@ services:
       init-kafka:
         condition: service_completed_successfully
     volumes:
-      - ./streams-quickstart-gradle/app/build/libs/app-0.1.jar:/home/appuser/stream.jar
+      - ./streams-quickstart-gradle/app/build/libs/app-1.0.jar:/home/appuser/stream.jar
     command: "java -jar /home/appuser/stream.jar"
   recoverable-consumer:
     hostname: recoverable-consumer

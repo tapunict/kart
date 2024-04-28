@@ -1,0 +1,1 @@
+{"player": "mario", "status": "scrap"}

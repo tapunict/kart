@@ -31,6 +31,14 @@ dependencies {
     implementation libs.guava
 
     implementation 'org.apache.kafka:kafka-streams:3.7.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+
+    // Lombok is used to reduce boilerplate code.
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+	annotationProcessor 'org.projectlombok:lombok:1.18.32'
+	
+	testCompileOnly 'org.projectlombok:lombok:1.18.32'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -50,16 +58,17 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-jar {
+task fatJar(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
-        attributes(
-            'Main-Class': 'myapps.Pipe'
-        )
+        attributes 'Main-Class': 'myapps.Pipe'
     }
-    // To include all dependencies into the JAR file, you might want to create a fat JAR
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
     }
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    // Alternatively, use `DuplicatesStrategy.INCLUDE` or `DuplicatesStrategy.FIRST`
+    with jar
 }

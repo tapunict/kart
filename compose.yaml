@@ -7,6 +7,7 @@ services:
       - ./cars:/usr/share/logstash/cars
     environment:
       XPACK_MONITORING_ENABLED: "false"
+
   zookeeper:
     hostname: zookeeper
     image: "confluentinc/cp-zookeeper:latest"
@@ -15,12 +16,12 @@ services:
       ZOOKEEPER_TICK_TIME: 2000 
     ports:
       - 2181:2181
+
   kafkaserver:
     hostname: kafkaserver
     image: "confluentinc/cp-kafka:latest"
     volumes:
-      - ./streams-quickstart-gradle/app/src/main/java/myapps/Pipe.java:/home/appuser/Pipe.java
-      - ./streams-quickstart-gradle/app/build/libs/app-0.1.jar:/home/appuser/app-0.1.jar
+      - ./streams-quickstart-gradle/app/build/libs/app-0.1.jar:/home/appuser/stream.jar
     depends_on:
       - zookeeper
     ports:
@@ -30,6 +31,8 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafkaserver:9092
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    # command: "java -jar /home/appuser/stream.jar"
+
   init-kafka:
     image: "confluentinc/cp-kafka:latest"
     depends_on:
@@ -39,11 +42,29 @@ services:
       "
       echo -e 'Creating kafka topics'
       kafka-topics --bootstrap-server kafkaserver:9092 --create --if-not-exists --topic cars --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafkaserver:9092 --create --if-not-exists --topic testout --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafkaserver:9092 --create --if-not-exists --topic recoverable --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafkaserver:9092 --create --if-not-exists --topic scrap --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafkaserver:9092 --create --if-not-exists --topic default --replication-factor 1 --partitions 1
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafkaserver:9092 --list
       "
+
+  recoverable-consumer:
+    hostname: recoverable-consumer
+    image: "confluentinc/cp-kafka:latest"
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+    command: "kafka-console-consumer --topic recoverable --bootstrap-server kafkaserver:9092 --from-beginning"
+  scrap-consumer:
+    hostname: scrap-consumer
+    image: "confluentinc/cp-kafka:latest"
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+    command: "kafka-console-consumer --topic scrap --bootstrap-server kafkaserver:9092 --from-beginning"
+ 
   kafkaui:
     hostname: kafkaui
     image: "provectuslabs/kafka-ui:latest"
@@ -54,3 +75,6 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: "local"
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "PLAINTEXT://kafkaserver:9092"
+
+# docker-compose up -d
+# docker-compose down

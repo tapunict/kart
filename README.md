@@ -16,3 +16,4 @@ Help Mario implementing a system based of files put in a given directory
 (choose the format, remember to be able to distinguish the status in the last line)
 send to Kafka and using Kafka Stream perform a triage and sent to the appropriate topic
 Use kafka consumer to show the status of the queues
+

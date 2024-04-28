@@ -1,0 +1,130 @@
+version: '3.7'
+services:
+    zookeeper:
+        image: tap:kafka
+        container_name: kafkaZK
+        environment:
+            - KAFKA_ACTION=start-zk
+        networks: 
+            tap:
+                ipv4_address: 10.0.100.21
+    kafkaServer:
+        image: tap:kafka
+        container_name: kafkaServer
+        hostname: kafkaServer
+        environment:
+            - KAFKA_ACTION=start-kafka
+        ports:
+            - 9092:9092
+        networks: 
+            tap:
+                ipv4_address: 10.0.100.23
+        depends_on:
+            - zookeeper
+    kafka-ui:
+        image: provectuslabs/kafka-ui:latest
+        container_name: kafkaWebUI
+        environment:
+            - KAFKA_CLUSTERS_0_NAME=local
+            - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafkaServer:9092
+        ports: 
+            - 8082:8080
+        networks: 
+            - tap
+        depends_on:
+            - kafkaServer
+        #facciamo partire un container(su cui montiamo il volume dove vogliamo i log) nella rete tap dove sarà attivo nginx 
+    logstash:
+        image: tap:logstash
+        environment:
+            XPACK_MONITORING_ENABLED: "false"
+        ports:
+            - 8081:8080
+        networks: 
+            tap:
+                ipv4_address: 10.0.100.22
+        volumes:
+            - kart_logs:/var/log/kart
+            - ./logstash/pipeline/kart.conf:/usr/share/logstash/pipeline/logstash.conf
+    kafkaTopic0:
+        image: tap:kafka
+        container_name: kafkaTopic0
+        environment:
+            - KAFKA_ACTION=create-topic
+            - KAFKA_TOPIC=karttopic
+        networks: 
+            - tap
+        depends_on:
+            - kafkaServer
+    kafkaTopic:
+        image: tap:kafka
+        container_name: kafkaTopic
+        environment:
+            - KAFKA_ACTION=create-topic
+            - KAFKA_TOPIC=kart-garage
+        networks: 
+            - tap
+        depends_on:
+            - kafkaServer
+    kafkaTopic2:
+        image: tap:kafka
+        container_name: kafkaTopic2
+        environment:
+            - KAFKA_ACTION=create-topic
+            - KAFKA_TOPIC=kart-emergency
+        networks: 
+            - tap
+        depends_on:
+            - kafkaServer
+    kart-stream:
+        image: tap:kafkastream
+        command: tap.KartStream
+        depends_on:
+            kafkaTopic0:
+                condition: service_completed_successfully
+            kafkaTopic:
+                condition: service_completed_successfully
+            kafkaTopic2:
+                condition: service_completed_successfully 
+            kafkaServer: 
+                condition: service_started
+        networks:
+           - tap    
+    kart-garage:
+        image: tap:kafka
+        container_name: KartGarage
+        environment:
+            - KAFKA_ACTION=consumer
+            - KAFKA_TOPIC=kart-garage
+        networks:
+           - tap 
+        depends_on:
+            kafkaTopic:
+                condition: service_completed_successfully
+            kafkaServer: 
+                condition: service_started
+    kart-emergency:
+        image: tap:kafka
+        container_name: KartEmergency
+        environment:
+            - KAFKA_ACTION=consumer
+            - KAFKA_TOPIC=kart-emergency
+        networks:
+           - tap 
+        depends_on:
+            kafkaTopic2:
+                condition: service_completed_successfully
+            kafkaServer: 
+                condition: service_started
+volumes:
+    kart_logs:
+networks:
+    tap:
+        name: tap
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 10.0.100.1/24
+        external: true
+
+#     export KAFKA_HEAP_OPTS="-Xmx1G -Xms1G"

@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group 'com.example'
+version '1.0'
+
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.guava:guava:31.0.1-jre'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    testImplementation 'junit:junit:4.13.2'
+
+    implementation 'org.apache.kafka:kafka-streams:3.7.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+	annotationProcessor 'org.projectlombok:lombok:1.18.32'
+	
+	testCompileOnly 'org.projectlombok:lombok:1.18.32'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
+}
+
+application {
+    // Define the main class for the application.
+    mainClassName = 'myapps.kartStream'
+}
+
+tasks.named('test') {
+    // Use JUnit to run tests.
+    useJUnit()
+}
+
+shadowJar {
+    archiveClassifier.set('') // Leave empty to replace the default jar
+    manifest {
+        attributes 'Main-Class': 'myapps.kartStream'
+    }
+}
+
+// Optionally, you can configure the task to run the fat JAR
+run {
+    dependsOn shadowJar
+    doFirst {
+        javaexec {
+            main = '-jar'
+            args = [shadowJar.archiveFile.get().asFile.absolutePath]
+        }
+    }
+}
